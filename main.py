@@ -144,7 +144,7 @@ if __name__ == "__main__":
                     start_app(args.mode, args.protocol, args.skip_activation)
                 )
         else:
-            # CLI模式使用标准asyncio事件循环
+            # CLI模式使用标准asyncio事件循环, 方便调试
             exit_code = asyncio.run(
                 start_app(args.mode, args.protocol, args.skip_activation)
             )

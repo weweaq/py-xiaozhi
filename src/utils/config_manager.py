@@ -45,6 +45,7 @@ class ConfigManager:
             "Local_VL_url": "https://open.bigmodel.cn/api/paas/v4/",
             "VLapi_key": "",
             "models": "glm-4v-plus",
+            "save_saw_photos": True
         },
         "SHORTCUTS": {
             "ENABLED": True,

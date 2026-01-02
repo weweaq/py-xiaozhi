@@ -6,7 +6,9 @@ import base64
 
 import cv2
 from openai import OpenAI
-
+# 添加：保存原始图片到本地
+import os
+from datetime import datetime
 from src.utils.config_manager import ConfigManager
 from src.utils.logging_config import get_logger
 
@@ -21,6 +23,8 @@ class VLCamera(BaseCamera):
     """
 
     _instance = None
+    # 将看到的东西存下来, 默认为False
+    _saveSawPhotos = None
 
     def __init__(self):
         """
@@ -28,7 +32,7 @@ class VLCamera(BaseCamera):
         """
         super().__init__()
         config = ConfigManager.get_instance()
-
+        self._saveSawPhotos = config.get_config("CAMERA.save_saw_photos", False)
         # 初始化OpenAI客户端
         self.client = OpenAI(
             api_key=config.get_config("CAMERA.VLapi_key"),
@@ -75,6 +79,19 @@ class VLCamera(BaseCamera):
             if not ret:
                 logger.error("Failed to capture image")
                 return False
+
+            if self._saveSawPhotos:
+                # 创建保存目录（如果不存在）
+                save_dir = "captured_images"
+                os.makedirs(save_dir, exist_ok=True)
+                # 生成带时间戳的文件名
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"camera_{self.camera_index}_{timestamp}.jpg"
+                filepath = os.path.join(save_dir, filename)
+
+                # 保存图片到本地
+                cv2.imwrite(filepath, frame)
+                logger.info(f"Image saved locally: {filepath}")
 
             # 获取原始图像尺寸
             height, width = frame.shape[:2]
