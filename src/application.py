@@ -452,6 +452,7 @@ class Application:
         """将文本更新转发为 UI 可识别的 JSON 消息（复用 UIPlugin 的 on_incoming_json）。
         role: "assistant" | "user" 影响消息类型映射。
         """
+        # 如果是助手，就是tts，要不然就是用户的stt（语音转文字）
         try:
             msg_type = "tts" if str(role).lower() == "assistant" else "stt"
         except Exception:
