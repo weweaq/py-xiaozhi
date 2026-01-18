@@ -14,7 +14,7 @@ soxr==0.5.0.post1
 psutil==7.0.0
 pillow==11.3.0
 webrtcvad-wheels==2.0.14
-sherpa-onnx==1.12.8
+sherpa-onnx==1.12.11
 pendulum==3.1.0
 
 # 纯 Python 为主
