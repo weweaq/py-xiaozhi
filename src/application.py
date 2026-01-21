@@ -213,19 +213,19 @@ class Application:
     # -------------------------
     # 自动/实时对话：根据 AEC 与当前配置选择模式，开启保持会话
     # -------------------------
-    async def start_auto_conversation(self) -> None:
+    async def start_auto_conversation(self, do_by_self: bool=False) -> None:
         try:
             ok = await self.connect_protocol()
             if not ok:
                 return
 
             mode = (
-                ListeningMode.REALTIME if self.aec_enabled else ListeningMode.AUTO_STOP
+                ListeningMode.REALTIME if self.aec_enabled and not do_by_self else ListeningMode.AUTO_STOP
             )
             self.listening_mode = mode
-            self.keep_listening = True
+            self.keep_listening = not do_by_self
             await self.protocol.send_start_listening(mode)
-            await self.set_device_state(DeviceState.LISTENING)
+            await self.set_device_state( DeviceState.LISTENING if self.keep_listening else DeviceState.IDLE)
         except Exception:
             pass
 

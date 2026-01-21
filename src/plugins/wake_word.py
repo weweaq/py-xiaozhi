@@ -84,8 +84,7 @@ class WakeWordPlugin(Plugin):
                     should_do_by_self = True
                 if should_do_by_self or self.app.is_speaking():
                     await self.abortSpeakingAndClearQueue()
-                else:
-                    await self.app.start_auto_conversation()
+                await self.app.start_auto_conversation(should_do_by_self)
                 # 根据配置播放对应的本地音频（默认异步播放）
                 await self.detectedAndDoBySelf(full_text,wake_word,audio_map,config)
         except Exception as e:
