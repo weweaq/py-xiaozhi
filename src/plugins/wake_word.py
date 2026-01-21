@@ -75,20 +75,24 @@ class WakeWordPlugin(Plugin):
             if hasattr(self.app, "device_state") and hasattr(
                     self.app, "start_auto_conversation"
             ):
-                if self.app.is_speaking():
+                # 检查唤醒词是否在 ALERT_AUDIO_MAP 中，并且 doBySelf 是否为 true
+                config = ConfigManager.get_instance()
+                audio_map = config.get_config("WAKE_WORD_OPTIONS.ALERT_AUDIO_MAP", {}) or {}
+                detected = str(wake_word) if wake_word is not None else ""
+                should_do_by_self = False
+                if detected in audio_map and audio_map[detected].get("doBySelf"):
+                    should_do_by_self = True
+                if should_do_by_self or self.app.is_speaking():
                     await self.abortSpeakingAndClearQueue()
                 else:
                     await self.app.start_auto_conversation()
-
                 # 根据配置播放对应的本地音频（默认异步播放）
-                await self.detectedAndDoBySelf(full_text, wake_word)
+                await self.detectedAndDoBySelf(full_text,wake_word,audio_map,config)
         except Exception as e:
             logger.error(f"处理唤醒词检测失败: {e}", exc_info=True)
 
-    async def detectedAndDoBySelf(self, full_text, wake_word):
+    async def detectedAndDoBySelf(self, full_text, wake_word, audio_map, config):
         try:
-            config = ConfigManager.get_instance()
-            audio_map = config.get_config("WAKE_WORD_OPTIONS.ALERT_AUDIO_MAP", {}) or {}
             blocking_default = config.get_config("WAKE_WORD_OPTIONS.ALERT_AUDIO_BLOCKING", False)
 
             if audio_map:
@@ -101,27 +105,27 @@ class WakeWordPlugin(Plugin):
 
                 selected_path = None
                 # 精确匹配优先
-                for key, path in audio_map.items():
+                for key, pathInfo in audio_map.items():
                     if key is None:
                         continue
                     try:
                         if detected == str(key):
-                            selected_path = path
+                            selected_path = pathInfo["path"]
                             break
                     except Exception:
                         continue
 
                 # 子串匹配
                 if selected_path is None:
-                    for key, path in audio_map.items():
+                    for key, pathInfo in audio_map.items():
                         if key is None:
                             continue
                         try:
                             if key in detected:
-                                selected_path = path
+                                selected_path = pathInfo["path"]
                                 break
                             if full_text and key in str(full_text):
-                                selected_path = path
+                                selected_path = pathInfo["path"]
                                 break
                         except Exception:
                             continue
