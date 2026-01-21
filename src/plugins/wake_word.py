@@ -73,19 +73,19 @@ class WakeWordPlugin(Plugin):
         try:
             # 若正在说话，交给应用的打断/状态机处理
             if hasattr(self.app, "device_state") and hasattr(
-                self.app, "start_auto_conversation"
+                    self.app, "start_auto_conversation"
             ):
                 if self.app.is_speaking():
-                    await self.app.abort_speaking(AbortReason.WAKE_WORD_DETECTED)
-                    audio_plugin = self.app.plugins.get_plugin("audio")
-                    if audio_plugin and audio_plugin.codec:
-                        await audio_plugin.codec.clear_audio_queue()
+                    await self.abortSpeakingAndClearQueue()
                 else:
                     await self.app.start_auto_conversation()
+
+                # 根据配置播放对应的本地音频（默认异步播放）
+                await self.detectedAndDoBySelf(full_text, wake_word)
         except Exception as e:
             logger.error(f"处理唤醒词检测失败: {e}", exc_info=True)
 
-        # 根据配置播放对应的本地音频（默认异步播放）
+    async def detectedAndDoBySelf(self, full_text, wake_word):
         try:
             config = ConfigManager.get_instance()
             audio_map = config.get_config("WAKE_WORD_OPTIONS.ALERT_AUDIO_MAP", {}) or {}
@@ -136,6 +136,12 @@ class WakeWordPlugin(Plugin):
                         loop.run_in_executor(None, lambda: _play_audio_file(selected_path, False))
         except Exception as e:
             logger.error(f"唤醒词播放提示音失败: {e}", exc_info=True)
+
+    async def abortSpeakingAndClearQueue(self):
+        await self.app.abort_speaking(AbortReason.WAKE_WORD_DETECTED)
+        audio_plugin = self.app.plugins.get_plugin("audio")
+        if audio_plugin and audio_plugin.codec:
+            await audio_plugin.codec.clear_audio_queue()
 
 
 def _play_audio_file(filepath: str, blocking: bool = False):
